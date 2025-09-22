@@ -3,6 +3,7 @@ package vrsoft.layout;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -139,19 +140,14 @@ public class PedidoApp extends JFrame {
 
                     Response response = client.newCall(request).execute();
                     if (response.isSuccessful()) {
-                        String json = Objects.requireNonNull(response.body()).string();
-                        // Supomos que backend retorna JSON {"status": "SUCESSO"} etc
-                        Map<String, String> map = objectMapper.readValue(json, Map.class);
-                        String novoStatus = map.get("status");
+                        String status = Objects.requireNonNull(response.body()).string().trim();
+                        pedidosStatus.put(id, status);
+                        SwingUtilities.invokeLater(this::atualizarAreaStatus);
 
-                        if ("SUCESSO".equalsIgnoreCase(novoStatus) || "FALHA".equalsIgnoreCase(novoStatus)) {
-                            pedidosStatus.put(id, novoStatus);
-                            SwingUtilities.invokeLater(this::atualizarAreaStatus);
-                        }
                     }
                     response.close();
                 } catch (Exception ex) {
-                    // Pode logar ou ignorar erros de polling para não travar o app
+                    System.out.println(ex.getMessage());
                 }
             }
         }, 3, 3, TimeUnit.SECONDS);
